@@ -129,7 +129,7 @@ const App = () => {
           <span style={{ flexBasis: '10%', textAlign: 'center' }}>Rank</span>
           <span style={{ flexBasis: '40%' }}>Character</span>
           <span style={{ flexBasis: '20%', textAlign: 'center' }}>Group Score</span>
-          <span style={{ flexBasis: '30%', textAlign: 'center' }}> {selectedPlayer ? `${selectedPlayer.player_name} Vote` : 'Vote'} </span> </div>
+          <span style={{ flexBasis: '30%', textAlign: 'center' }}> {selectedPlayer ? `${selectedPlayer.player_name}'s Score` : 'Score'} </span> </div>
         {sortedCharacters.map((character, index) => (
           <div key={character.name} style={{ 
             display: 'flex',
