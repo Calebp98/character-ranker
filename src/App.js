@@ -128,12 +128,11 @@ const App = () => {
         <div style={{ display: 'flex', backgroundColor: '#f0f0f0', padding: '0.5rem', fontWeight: 'bold' }}>
           <span style={{ flexBasis: '10%', textAlign: 'center' }}>Rank</span>
           <span style={{ flexBasis: '40%' }}>Character</span>
-          <span style={{ flexBasis: '20%', textAlign: 'center' }}>Score</span>
-          <span style={{ flexBasis: '30%', textAlign: 'center' }}>Vote</span>
-        </div>
+          <span style={{ flexBasis: '20%', textAlign: 'center' }}>Group Score</span>
+          <span style={{ flexBasis: '30%', textAlign: 'center' }}> {selectedPlayer ? `${selectedPlayer.player_name} Vote` : 'Vote'} </span> </div>
         {sortedCharacters.map((character, index) => (
           <div key={character.name} style={{ 
-            display: 'flex', 
+            display: 'flex',
             alignItems: 'center', 
             padding: '0.5rem',
             backgroundColor: index % 2 === 0 ? '#f8f8f8' : 'white',
