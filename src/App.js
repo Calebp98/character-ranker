@@ -98,7 +98,7 @@ const App = () => {
         onChange={(e) => setSelectedPlayer(players.find(p => p.id === e.target.value))}
         style={{ padding: '0.5rem', marginBottom: '1rem', width: '100%' }}
       >
-        <option value="">Select a player</option>
+        <option value="">Select a user</option>
         {players.map(player => (
           <option key={player.id} value={player.id}>
             {player.player_name} (Credits: {calculatePlayerCredits(player)})
@@ -108,7 +108,7 @@ const App = () => {
 
       {selectedPlayer && (
         <p style={{ marginBottom: '1rem' }}>
-          Selected Player: {selectedPlayer.player_name} (Credits: {calculatePlayerCredits(selectedPlayer)})
+          Selected User: {selectedPlayer.player_name} (Credits: {calculatePlayerCredits(selectedPlayer)})
         </p>
       )}
 
