@@ -76,27 +76,18 @@ const App = () => {
     return 100 - Object.values(player.votes).reduce((sum, vote) => sum + vote, 0);
   };
 
+  const calculateTotalScore = (characterName) => {
+    return players.reduce((sum, player) => sum + (player.votes[characterName] || 0), 0);
+  };
+
   const allCharacters = Array.from(new Set(players.flatMap(player => Object.keys(player.votes))));
+  const sortedCharacters = allCharacters
+    .map(character => ({ name: character, score: calculateTotalScore(character) }))
+    .sort((a, b) => b.score - a.score);
 
   return (
     <div style={{ padding: '1rem', maxWidth: '500px', margin: '0 auto' }}>
-      <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '1rem' }}>Character Ranking App</h1>
-      
-      <form onSubmit={handleAddPlayer} style={{ marginBottom: '1rem' }}>
-        <input
-          type="text"
-          value={newPlayerName}
-          onChange={(e) => setNewPlayerName(e.target.value)}
-          placeholder="Enter new player name"
-          style={{ padding: '0.5rem', marginRight: '0.5rem', width: '70%' }}
-        />
-        <button
-          type="submit"
-          style={{ padding: '0.5rem 1rem', backgroundColor: '#4CAF50', color: 'white', border: 'none', cursor: 'pointer' }}
-        >
-          Add Player
-        </button>
-      </form>
+      <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '1rem' }}>Character Ranking Leaderboard</h1>
 
       <select
         value={selectedPlayer ? selectedPlayer.id : ''}
@@ -117,6 +108,83 @@ const App = () => {
         </p>
       )}
 
+      <div style={{ border: '1px solid #ddd', borderRadius: '4px', overflow: 'hidden', marginBottom: '2rem' }}>
+        <div style={{ display: 'flex', backgroundColor: '#f0f0f0', padding: '0.5rem', fontWeight: 'bold' }}>
+          <span style={{ flexBasis: '10%', textAlign: 'center' }}>Rank</span>
+          <span style={{ flexBasis: '40%' }}>Character</span>
+          <span style={{ flexBasis: '20%', textAlign: 'center' }}>Score</span>
+          <span style={{ flexBasis: '30%', textAlign: 'center' }}>Vote</span>
+        </div>
+        {sortedCharacters.map((character, index) => (
+          <div key={character.name} style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            padding: '0.5rem',
+            backgroundColor: index % 2 === 0 ? '#f8f8f8' : 'white',
+            borderTop: '1px solid #ddd'
+          }}>
+            <span style={{ flexBasis: '10%', textAlign: 'center', fontWeight: 'bold' }}>{index + 1}</span>
+            <span style={{ flexBasis: '40%' }}>{character.name}</span>
+            <span style={{ flexBasis: '20%', textAlign: 'center' }}>{character.score}</span>
+            <div style={{ display: 'flex', alignItems: 'center', flexBasis: '30%', justifyContent: 'center' }}>
+              <button
+                onClick={() => handleVote(character.name, 1)}
+                disabled={!selectedPlayer || calculatePlayerCredits(selectedPlayer) <= 0}
+                style={{ 
+                  padding: '0.25rem 0.5rem', 
+                  backgroundColor: 'green', 
+                  color: 'white', 
+                  marginRight: '0.5rem', 
+                  opacity: (!selectedPlayer || calculatePlayerCredits(selectedPlayer) <= 0) ? 0.5 : 1,
+                  cursor: 'pointer',
+                  border: 'none',
+                  borderRadius: '3px'
+                }}
+              >
+                +
+              </button>
+              <span style={{ minWidth: '30px', textAlign: 'center' }}>
+                {selectedPlayer ? (selectedPlayer.votes[character.name] || 0) : 0}
+              </span>
+              <button
+                onClick={() => handleVote(character.name, -1)}
+                disabled={!selectedPlayer || !(selectedPlayer.votes[character.name] > 0)}
+                style={{ 
+                  padding: '0.25rem 0.5rem', 
+                  backgroundColor: 'red', 
+                  color: 'white', 
+                  marginLeft: '0.5rem', 
+                  opacity: (!selectedPlayer || !(selectedPlayer.votes[character.name] > 0)) ? 0.5 : 1,
+                  cursor: 'pointer',
+                  border: 'none',
+                  borderRadius: '3px'
+                }}
+              >
+                -
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <h2 style={{ fontSize: '1.2rem', fontWeight: 'bold', marginBottom: '1rem', borderBottom: '1px solid #ddd', paddingBottom: '0.5rem' }}>Admin</h2>
+      
+      <form onSubmit={handleAddPlayer} style={{ marginBottom: '1rem' }}>
+        <input
+          type="text"
+          value={newPlayerName}
+          onChange={(e) => setNewPlayerName(e.target.value)}
+          placeholder="Enter new player name"
+          style={{ padding: '0.5rem', marginRight: '0.5rem', width: '70%' }}
+        />
+        <button
+          type="submit"
+          style={{ padding: '0.5rem 1rem', backgroundColor: '#4CAF50', color: 'white', border: 'none', cursor: 'pointer' }}
+        >
+          Add Player
+        </button>
+      </form>
+
       <form onSubmit={handleAddCharacter} style={{ marginBottom: '1rem' }}>
         <input
           type="text"
@@ -132,36 +200,6 @@ const App = () => {
           Add Character
         </button>
       </form>
-
-      <div>
-        {allCharacters.map(character => (
-          <div key={character} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem', padding: '0.5rem', backgroundColor: '#f0f0f0' }}>
-            <span style={{ flexBasis: '40%' }}>{character}</span>
-            <span style={{ flexBasis: '20%', textAlign: 'center' }}>
-              Score: {players.reduce((sum, player) => sum + (player.votes[character] || 0), 0)}
-            </span>
-            <div style={{ display: 'flex', alignItems: 'center', flexBasis: '40%', justifyContent: 'flex-end' }}>
-              <button
-                onClick={() => handleVote(character, 1)}
-                disabled={!selectedPlayer || calculatePlayerCredits(selectedPlayer) <= 0}
-                style={{ padding: '0.25rem 0.5rem', backgroundColor: 'green', color: 'white', marginRight: '0.5rem', opacity: (!selectedPlayer || calculatePlayerCredits(selectedPlayer) <= 0) ? 0.5 : 1 }}
-              >
-                +
-              </button>
-              <span style={{ minWidth: '30px', textAlign: 'center' }}>
-                {selectedPlayer ? (selectedPlayer.votes[character] || 0) : 0}
-              </span>
-              <button
-                onClick={() => handleVote(character, -1)}
-                disabled={!selectedPlayer || !(selectedPlayer.votes[character] > 0)}
-                style={{ padding: '0.25rem 0.5rem', backgroundColor: 'red', color: 'white', marginLeft: '0.5rem', opacity: (!selectedPlayer || !(selectedPlayer.votes[character] > 0)) ? 0.5 : 1 }}
-              >
-                -
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
     </div>
   );
 };
