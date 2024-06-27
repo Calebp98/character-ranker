@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from './supabaseClient';
+import { Analytics } from "@vercel/analytics/react"
 
 const App = () => {
   const [players, setPlayers] = useState([]);
