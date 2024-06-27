@@ -102,6 +102,7 @@ const App = () => {
 
   return (
     <div style={{ padding: '1rem', maxWidth: '500px', margin: '0 auto' }}>
+      <Analytics />
       <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '1rem' }}>Bridgerton S1 Character Ranking</h1>
 
       <select
