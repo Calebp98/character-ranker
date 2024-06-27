@@ -43,10 +43,7 @@ const App = () => {
     e.preventDefault();
     if (!newCharacterName.trim()) return;
 
-    // We don't need to add the character to the database explicitly
-    // It will be added when a player votes for it
     setNewCharacterName('');
-    // Refresh the players to show the new character
     fetchPlayers();
   };
 
@@ -55,7 +52,13 @@ const App = () => {
 
     const currentVotes = selectedPlayer.votes || {};
     const currentVote = currentVotes[characterName] || 0;
-    const newVote = Math.max(0, currentVote + voteChange);
+    const newVote = currentVote + voteChange;
+
+    const playerCredits = calculatePlayerCredits(selectedPlayer);
+    if (playerCredits < Math.abs(voteChange)) {
+      alert('Not enough credits!');
+      return;
+    }
 
     const newVotes = { ...currentVotes, [characterName]: newVote };
 
@@ -73,7 +76,7 @@ const App = () => {
   };
 
   const calculatePlayerCredits = (player) => {
-    return 100 - Object.values(player.votes).reduce((sum, vote) => sum + vote, 0);
+    return 100 - Object.values(player.votes).reduce((sum, vote) => sum + Math.abs(vote), 0);
   };
 
   const calculateTotalScore = (characterName) => {
@@ -148,13 +151,13 @@ const App = () => {
               </span>
               <button
                 onClick={() => handleVote(character.name, -1)}
-                disabled={!selectedPlayer || !(selectedPlayer.votes[character.name] > 0)}
+                disabled={!selectedPlayer || calculatePlayerCredits(selectedPlayer) <= 0}
                 style={{ 
                   padding: '0.25rem 0.5rem', 
                   backgroundColor: 'red', 
                   color: 'white', 
                   marginLeft: '0.5rem', 
-                  opacity: (!selectedPlayer || !(selectedPlayer.votes[character.name] > 0)) ? 0.5 : 1,
+                  opacity: (!selectedPlayer || calculatePlayerCredits(selectedPlayer) <= 0) ? 0.5 : 1,
                   cursor: 'pointer',
                   border: 'none',
                   borderRadius: '3px'
