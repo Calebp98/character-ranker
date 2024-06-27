@@ -87,7 +87,7 @@ const App = () => {
 
   return (
     <div style={{ padding: '1rem', maxWidth: '500px', margin: '0 auto' }}>
-      <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '1rem' }}>Character Ranking Leaderboard</h1>
+      <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '1rem' }}>Bridgerton S1 Character Ranking</h1>
 
       <select
         value={selectedPlayer ? selectedPlayer.id : ''}
