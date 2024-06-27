@@ -207,10 +207,7 @@ const App = () => {
             </div>
           );
         })}
-      </div>
-
-      <h2 style={{ fontSize: '1.2rem', fontWeight: 'bold', marginBottom: '1rem', borderBottom: '1px solid #ddd', paddingBottom: '0.5rem' }}>Admin</h2>
-      
+      </div>      
 
       <h2 style={{ fontSize: '1.2rem', fontWeight: 'bold', marginBottom: '1rem', borderBottom: '1px solid #ddd', paddingBottom: '0.5rem' }}>Admin</h2>
       
