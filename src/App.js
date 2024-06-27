@@ -89,6 +89,17 @@ const App = () => {
     .map(character => ({ name: character, score: calculateTotalScore(character) }))
     .sort((a, b) => b.score - a.score);
 
+  
+    const getPlayerFavorites = (player) => {
+      const votes = player.votes;
+      if (Object.keys(votes).length === 0) return { favorite: 'None', least_favorite: 'None' };
+  
+      const favorite = Object.keys(votes).reduce((a, b) => votes[a] > votes[b] ? a : b);
+      const least_favorite = Object.keys(votes).reduce((a, b) => votes[a] < votes[b] ? a : b);
+  
+      return { favorite, least_favorite };
+    };
+
   return (
     <div style={{ padding: '1rem', maxWidth: '500px', margin: '0 auto' }}>
       <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '1rem' }}>Bridgerton S1 Character Ranking</h1>
@@ -170,6 +181,36 @@ const App = () => {
           </div>
         ))}
       </div>
+
+
+
+      <h2 style={{ fontSize: '1.2rem', fontWeight: 'bold', marginTop: '2rem', marginBottom: '1rem' }}>User Favorites</h2>
+      <div style={{ border: '1px solid #ddd', borderRadius: '4px', overflow: 'hidden', marginBottom: '2rem' }}>
+        <div style={{ display: 'flex', backgroundColor: '#f0f0f0', padding: '0.5rem', fontWeight: 'bold' }}>
+          <span style={{ flexBasis: '40%' }}>Player</span>
+          <span style={{ flexBasis: '30%' }}>Favorite</span>
+          <span style={{ flexBasis: '30%' }}>Least Favorite</span>
+        </div>
+        {players.map((player, index) => {
+          const { favorite, least_favorite } = getPlayerFavorites(player);
+          return (
+            <div key={player.id} style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              padding: '0.5rem',
+              backgroundColor: index % 2 === 0 ? '#f8f8f8' : 'white',
+              borderTop: '1px solid #ddd'
+            }}>
+              <span style={{ flexBasis: '40%' }}>{player.player_name}</span>
+              <span style={{ flexBasis: '30%' }}>{favorite} ({player.votes[favorite] || 0})</span>
+              <span style={{ flexBasis: '30%' }}>{least_favorite} ({player.votes[least_favorite] || 0})</span>
+            </div>
+          );
+        })}
+      </div>
+
+      <h2 style={{ fontSize: '1.2rem', fontWeight: 'bold', marginBottom: '1rem', borderBottom: '1px solid #ddd', paddingBottom: '0.5rem' }}>Admin</h2>
+      
 
       <h2 style={{ fontSize: '1.2rem', fontWeight: 'bold', marginBottom: '1rem', borderBottom: '1px solid #ddd', paddingBottom: '0.5rem' }}>Admin</h2>
       
