@@ -56,49 +56,54 @@ const App = () => {
     const newVote = currentVote + voteChange;
 
     const playerCredits = calculatePlayerCredits(selectedPlayer);
-    if (playerCredits < Math.abs(voteChange)) {
-      alert('Not enough credits!');
-      return;
-    }
+    
+    // Allow voting if it's withdrawing a previous vote or if there are enough credits
+    if (voteChange * currentVote < 0 || playerCredits >= Math.abs(voteChange)) {
+      const newVotes = { ...currentVotes, [characterName]: newVote };
 
-    const newVotes = { ...currentVotes, [characterName]: newVote };
+      // Remove the character from votes if the new vote is 0
+      if (newVote === 0) {
+        delete newVotes[characterName];
+      }
 
-    const { error } = await supabase
-      .from('player_votes')
-      .update({ votes: newVotes })
-      .eq('id', selectedPlayer.id);
+      const { error } = await supabase
+        .from('player_votes')
+        .update({ votes: newVotes })
+        .eq('id', selectedPlayer.id);
 
-    if (error) {
-      console.error('Error updating vote:', error);
+      if (error) {
+        console.error('Error updating vote:', error);
+      } else {
+        fetchPlayers();
+        setSelectedPlayer(prev => ({ ...prev, votes: newVotes }));
+      }
     } else {
-      fetchPlayers();
-      setSelectedPlayer(prev => ({ ...prev, votes: newVotes }));
+      alert('Not enough credits!');
     }
   };
 
   const calculatePlayerCredits = (player) => {
-    return 100 - Object.values(player.votes).reduce((sum, vote) => sum + Math.abs(vote), 0);
+    return 100 - Object.values(player.votes || {}).reduce((sum, vote) => sum + Math.abs(vote), 0);
   };
 
   const calculateTotalScore = (characterName) => {
     return players.reduce((sum, player) => sum + (player.votes[characterName] || 0), 0);
   };
 
-  const allCharacters = Array.from(new Set(players.flatMap(player => Object.keys(player.votes))));
+  const allCharacters = Array.from(new Set(players.flatMap(player => Object.keys(player.votes || {}))));
   const sortedCharacters = allCharacters
     .map(character => ({ name: character, score: calculateTotalScore(character) }))
     .sort((a, b) => b.score - a.score);
 
-  
-    const getPlayerFavorites = (player) => {
-      const votes = player.votes;
-      if (Object.keys(votes).length === 0) return { favorite: 'None', least_favorite: 'None' };
-  
-      const favorite = Object.keys(votes).reduce((a, b) => votes[a] > votes[b] ? a : b);
-      const least_favorite = Object.keys(votes).reduce((a, b) => votes[a] < votes[b] ? a : b);
-  
-      return { favorite, least_favorite };
-    };
+  const getPlayerFavorites = (player) => {
+    const votes = player.votes || {};
+    if (Object.keys(votes).length === 0) return { favorite: 'None', least_favorite: 'None' };
+
+    const favorite = Object.keys(votes).reduce((a, b) => votes[a] > votes[b] ? a : b);
+    const least_favorite = Object.keys(votes).reduce((a, b) => votes[a] < votes[b] ? a : b);
+
+    return { favorite, least_favorite };
+  };
 
   return (
     <div style={{ padding: '1rem', maxWidth: '500px', margin: '0 auto' }}>
@@ -129,60 +134,59 @@ const App = () => {
           <span style={{ flexBasis: '10%', textAlign: 'center' }}>Rank</span>
           <span style={{ flexBasis: '40%' }}>Character</span>
           <span style={{ flexBasis: '20%', textAlign: 'center' }}>Group Score</span>
-          <span style={{ flexBasis: '30%', textAlign: 'center' }}> {selectedPlayer ? `${selectedPlayer.player_name}'s Score` : 'Score'} </span> </div>
+          <span style={{ flexBasis: '30%', textAlign: 'center' }}> {selectedPlayer ? `${selectedPlayer.player_name}'s Score` : 'Score'} </span>
+        </div>
         {sortedCharacters.map((character, index) => (
-          <div key={character.name} style={{ 
-            display: 'flex',
-            alignItems: 'center', 
-            padding: '0.5rem',
-            backgroundColor: index % 2 === 0 ? '#f8f8f8' : 'white',
-            borderTop: '1px solid #ddd'
-          }}>
-            <span style={{ flexBasis: '10%', textAlign: 'center', fontWeight: 'bold' }}>{index + 1}</span>
-            <span style={{ flexBasis: '40%' }}>{character.name}</span>
-            <span style={{ flexBasis: '20%', textAlign: 'center' }}>{character.score}</span>
-            <div style={{ display: 'flex', alignItems: 'center', flexBasis: '30%', justifyContent: 'center' }}>
-              <button
-                onClick={() => handleVote(character.name, 1)}
-                disabled={!selectedPlayer || calculatePlayerCredits(selectedPlayer) <= 0}
-                style={{ 
-                  padding: '0.25rem 0.5rem', 
-                  backgroundColor: 'green', 
-                  color: 'white', 
-                  marginRight: '0.5rem', 
-                  opacity: (!selectedPlayer || calculatePlayerCredits(selectedPlayer) <= 0) ? 0.5 : 1,
-                  cursor: 'pointer',
-                  border: 'none',
-                  borderRadius: '3px'
-                }}
-              >
-                +
-              </button>
-              <span style={{ minWidth: '30px', textAlign: 'center' }}>
-                {selectedPlayer ? (selectedPlayer.votes[character.name] || 0) : 0}
-              </span>
-              <button
-                onClick={() => handleVote(character.name, -1)}
-                disabled={!selectedPlayer || calculatePlayerCredits(selectedPlayer) <= 0}
-                style={{ 
-                  padding: '0.25rem 0.5rem', 
-                  backgroundColor: 'red', 
-                  color: 'white', 
-                  marginLeft: '0.5rem', 
-                  opacity: (!selectedPlayer || calculatePlayerCredits(selectedPlayer) <= 0) ? 0.5 : 1,
-                  cursor: 'pointer',
-                  border: 'none',
-                  borderRadius: '3px'
-                }}
-              >
-                -
-              </button>
-            </div>
-          </div>
-        ))}
+  <div key={character.name} style={{ 
+    display: 'flex',
+    alignItems: 'center', 
+    padding: '0.5rem',
+    backgroundColor: index % 2 === 0 ? '#f8f8f8' : 'white',
+    borderTop: '1px solid #ddd'
+  }}>
+    <span style={{ flexBasis: '10%', textAlign: 'center', fontWeight: 'bold' }}>{index + 1}</span>
+    <span style={{ flexBasis: '40%' }}>{character.name}</span>
+    <span style={{ flexBasis: '20%', textAlign: 'center' }}>{character.score}</span>
+    <div style={{ display: 'flex', alignItems: 'center', flexBasis: '30%', justifyContent: 'center' }}>
+      <button
+        onClick={() => handleVote(character.name, 1)}
+        disabled={!selectedPlayer || (calculatePlayerCredits(selectedPlayer) <= 0 && (selectedPlayer.votes[character.name] || 0) >= 0)}
+        style={{ 
+          padding: '0.25rem 0.5rem', 
+          backgroundColor: 'green', 
+          color: 'white', 
+          marginRight: '0.5rem', 
+          opacity: (!selectedPlayer || (calculatePlayerCredits(selectedPlayer) <= 0 && (selectedPlayer.votes[character.name] || 0) >= 0)) ? 0.5 : 1,
+          cursor: 'pointer',
+          border: 'none',
+          borderRadius: '3px'
+        }}
+      >
+        +
+      </button>
+      <span style={{ minWidth: '30px', textAlign: 'center' }}>
+        {selectedPlayer ? (selectedPlayer.votes[character.name] || 0) : 0}
+      </span>
+      <button
+        onClick={() => handleVote(character.name, -1)}
+        disabled={!selectedPlayer || (calculatePlayerCredits(selectedPlayer) <= 0 && (selectedPlayer.votes[character.name] || 0) <= 0)}
+        style={{ 
+          padding: '0.25rem 0.5rem', 
+          backgroundColor: 'red', 
+          color: 'white', 
+          marginLeft: '0.5rem', 
+          opacity: (!selectedPlayer || (calculatePlayerCredits(selectedPlayer) <= 0 && (selectedPlayer.votes[character.name] || 0) <= 0)) ? 0.5 : 1,
+          cursor: 'pointer',
+          border: 'none',
+          borderRadius: '3px'
+        }}
+      >
+        -
+      </button>
+    </div>
+  </div>
+))}
       </div>
-
-
 
       <h2 style={{ fontSize: '1.2rem', fontWeight: 'bold', marginTop: '2rem', marginBottom: '1rem' }}>User Favorites</h2>
       <div style={{ border: '1px solid #ddd', borderRadius: '4px', overflow: 'hidden', marginBottom: '2rem' }}>
