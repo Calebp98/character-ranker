@@ -92,48 +92,38 @@ const App = () => {
     const currentVote = currentVotes[characterName] || 0;
     const newVote = currentVote + voteChange;
 
-    const playerCredits = calculatePlayerCredits(selectedPlayer);
+    const newVotes = { ...currentVotes, [characterName]: newVote };
 
-    // Allow voting if it's withdrawing a previous vote or if there are enough credits
-    if (voteChange * currentVote < 0 || playerCredits >= Math.abs(voteChange)) {
-      const newVotes = { ...currentVotes, [characterName]: newVote };
+    // Remove the character from votes if the new vote is 0
+    if (newVote === 0) {
+      delete newVotes[characterName];
+    }
 
-      // Remove the character from votes if the new vote is 0
-      if (newVote === 0) {
-        delete newVotes[characterName];
-      }
+    const { error } = await supabase
+      .from("player_votes")
+      .update({ votes: newVotes })
+      .eq("id", selectedPlayer.id);
 
-      const { error } = await supabase
-        .from("player_votes")
-        .update({ votes: newVotes })
-        .eq("id", selectedPlayer.id);
-
-      if (error) {
-        console.error("Error updating vote:", error);
-      } else {
-        fetchPlayers();
-        setSelectedPlayer((prev) => ({ ...prev, votes: newVotes }));
-      }
+    if (error) {
+      console.error("Error updating vote:", error);
     } else {
-      alert("Not enough credits!");
+      fetchPlayers();
+      setSelectedPlayer((prev) => ({ ...prev, votes: newVotes }));
     }
   };
 
-  const calculatePlayerCredits = (player) => {
-    return (
-      100 -
-      Object.values(player.votes || {}).reduce(
-        (sum, vote) => sum + Math.abs(vote),
-        0
-      )
-    );
-  };
-
   const calculateTotalScore = (characterName) => {
-    return players.reduce(
-      (sum, player) => sum + (player.votes[characterName] || 0),
-      0
-    );
+    const score = players.reduce((sum, player) => {
+      const playerTotalVotes = Object.values(player.votes || {}).reduce(
+        (total, vote) => total + Math.abs(vote),
+        0
+      );
+      const normalizedVote = playerTotalVotes
+        ? (player.votes[characterName] || 0) / playerTotalVotes
+        : 0;
+      return sum + normalizedVote;
+    }, 0);
+    return Math.round(score * 1000) / 1000;
   };
 
   const getSortedCharacters = () => {
@@ -181,6 +171,27 @@ const App = () => {
 
   const sortedCharacters = getSortedCharacters();
 
+  const handleResetScores = async () => {
+    if (!selectedPlayer) return;
+
+    const resetVotes = Object.keys(selectedPlayer.votes || {}).reduce(
+      (acc, key) => ({ ...acc, [key]: 0 }),
+      {}
+    );
+
+    const { error } = await supabase
+      .from("player_votes")
+      .update({ votes: resetVotes })
+      .eq("id", selectedPlayer.id);
+
+    if (error) {
+      console.error("Error resetting scores:", error);
+    } else {
+      fetchPlayers();
+      setSelectedPlayer((prev) => ({ ...prev, votes: resetVotes }));
+    }
+  };
+
   return (
     <div style={{ padding: "1rem", maxWidth: "500px", margin: "0 auto" }}>
       <Analytics />
@@ -200,16 +211,27 @@ const App = () => {
         <option value="">Select a user</option>
         {players.map((player) => (
           <option key={player.id} value={player.id}>
-            {player.player_name} (Credits: {calculatePlayerCredits(player)})
+            {player.player_name}
           </option>
         ))}
       </select>
 
       {selectedPlayer && (
-        <p style={{ marginBottom: "1rem" }}>
-          Selected User: {selectedPlayer.player_name} (Credits:{" "}
-          {calculatePlayerCredits(selectedPlayer)})
-        </p>
+        <div style={{ marginBottom: "1rem" }}>
+          <button
+            onClick={handleResetScores}
+            style={{
+              padding: "0.25rem 0.5rem",
+              backgroundColor: "orange",
+              color: "white",
+              border: "none",
+              borderRadius: "3px",
+              cursor: "pointer",
+            }}
+          >
+            Reset {selectedPlayer.player_name}'s Scores
+          </button>
+        </div>
       )}
 
       <div
@@ -292,22 +314,13 @@ const App = () => {
             >
               <button
                 onClick={() => handleVote(character.name, 1)}
-                disabled={
-                  !selectedPlayer ||
-                  (calculatePlayerCredits(selectedPlayer) <= 0 &&
-                    (selectedPlayer.votes[character.name] || 0) >= 0)
-                }
+                disabled={!selectedPlayer}
                 style={{
                   padding: "0.25rem 0.5rem",
                   backgroundColor: "green",
                   color: "white",
                   marginRight: "0.5rem",
-                  opacity:
-                    !selectedPlayer ||
-                    (calculatePlayerCredits(selectedPlayer) <= 0 &&
-                      (selectedPlayer.votes[character.name] || 0) >= 0)
-                      ? 0.5
-                      : 1,
+                  opacity: !selectedPlayer ? 0.5 : 1,
                   cursor: "pointer",
                   border: "none",
                   borderRadius: "3px",
@@ -317,22 +330,13 @@ const App = () => {
               </button>
               <button
                 onClick={() => handleVote(character.name, -1)}
-                disabled={
-                  !selectedPlayer ||
-                  (calculatePlayerCredits(selectedPlayer) <= 0 &&
-                    (selectedPlayer.votes[character.name] || 0) <= 0)
-                }
+                disabled={!selectedPlayer}
                 style={{
                   padding: "0.25rem 0.5rem",
                   backgroundColor: "red",
                   color: "white",
                   marginLeft: "0.5rem",
-                  opacity:
-                    !selectedPlayer ||
-                    (calculatePlayerCredits(selectedPlayer) <= 0 &&
-                      (selectedPlayer.votes[character.name] || 0) <= 0)
-                      ? 0.5
-                      : 1,
+                  opacity: !selectedPlayer ? 0.5 : 1,
                   cursor: "pointer",
                   border: "none",
                   borderRadius: "3px",
