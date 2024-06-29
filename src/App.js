@@ -41,10 +41,48 @@ const App = () => {
 
   const handleAddCharacter = async (e) => {
     e.preventDefault();
-    if (!newCharacterName.trim()) return;
+    if (!newCharacterName.trim()) {
+      alert("Character name cannot be empty");
+      return;
+    }
 
-    setNewCharacterName("");
-    fetchPlayers();
+    try {
+      // First, get all current players
+      const { data: currentPlayers, error: fetchError } = await supabase
+        .from("player_votes")
+        .select("*");
+
+      if (fetchError) {
+        throw new Error(`Error fetching players: ${fetchError.message}`);
+      }
+
+      console.log("Current players:", currentPlayers);
+
+      // Update each player's votes individually
+      for (const player of currentPlayers) {
+        const updatedVotes = { ...(player.votes || {}), [newCharacterName]: 0 };
+
+        const { error: updateError } = await supabase
+          .from("player_votes")
+          .update({ votes: updatedVotes })
+          .eq("id", player.id);
+
+        if (updateError) {
+          throw new Error(
+            `Error updating player ${player.id}: ${updateError.message}`
+          );
+        }
+      }
+
+      console.log("Updates applied successfully");
+
+      setNewCharacterName("");
+      await fetchPlayers(); // Refresh the player data
+      alert(`Character "${newCharacterName}" has been added successfully!`);
+    } catch (error) {
+      console.error("Error in handleAddCharacter:", error);
+      alert(`Failed to add character: ${error.message}`);
+    }
   };
 
   const handleVote = async (characterName, voteChange) => {
